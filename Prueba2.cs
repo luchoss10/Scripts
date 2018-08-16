@@ -22,6 +22,10 @@ public class Prueba2 : MonoBehaviour
     float curr_offset_y = 0;
     float curr_offset_z = 0;
 
+    float RAD_A_DEG = 57.295779f;
+    float A_R = 16384.0f;
+    float G_R = 131.0f;
+
     // Increase the speed/influence rotation
     public float factor = 7;
 
@@ -60,7 +64,7 @@ public class Prueba2 : MonoBehaviour
             try
             {
                 dataString = stream.ReadLine();
-                Debug.Log("RCV_ : " + dataString);
+                //Debug.Log("RCV_ : " + dataString);
             }
             catch (System.IO.IOException ioe)
             {
@@ -70,7 +74,7 @@ public class Prueba2 : MonoBehaviour
         }
         else
             dataString = "NOT OPEN";
-        Debug.Log("RCV_ : " + dataString);
+        //Debug.Log("RCV_ : " + dataString);
 
         if (!dataString.Equals("NOT OPEN"))
         {
@@ -79,19 +83,22 @@ public class Prueba2 : MonoBehaviour
             string[] dataRaw = dataString.Split(splitChar);
 
             // normalized accelerometer values
-            float ax = Int32.Parse(dataRaw[0]) * acc_normalizer_factor;
-            float ay = Int32.Parse(dataRaw[1]) * acc_normalizer_factor;
-            float az = Int32.Parse(dataRaw[2]) * acc_normalizer_factor;
+            float ax = Int32.Parse(dataRaw[0]) / A_R; //* acc_normalizer_factor;
+            float ay = Int32.Parse(dataRaw[1]) / A_R; //* acc_normalizer_factor;
+            float az = Int32.Parse(dataRaw[2]) / A_R; //* acc_normalizer_factor;
 
             // normalized gyrocope values
-            float gx = Int32.Parse(dataRaw[3]) * gyro_normalizer_factor;
-            float gy = Int32.Parse(dataRaw[4]) * gyro_normalizer_factor;
-            float gz = Int32.Parse(dataRaw[5]) * gyro_normalizer_factor;
+            float gx = Int32.Parse(dataRaw[3]) / G_R; //* gyro_normalizer_factor;
+            float gy = Int32.Parse(dataRaw[4]) / G_R; //* gyro_normalizer_factor;
+            float gz = Int32.Parse(dataRaw[5]) / G_R; //* gyro_normalizer_factor;
+
+            
 
             // prevent 
-            if (Mathf.Abs(ax) - 1 < 0) ax = 0;
+            /*if (Mathf.Abs(ax) - 1 < 0) ax = 0;
             if (Mathf.Abs(ay) - 1 < 0) ay = 0;
             if (Mathf.Abs(az) - 1 < 0) az = 0;
+
 
 
             curr_offset_x += ax;
@@ -104,13 +111,35 @@ public class Prueba2 : MonoBehaviour
             if (Mathf.Abs(gy) < 0.025f) gy = 0f;
             if (Mathf.Abs(gz) < 0.025f) gz = 0f;
 
-            curr_angle_x += gx;
+            /*curr_angle_x += gx;
             curr_angle_y += gy;
-            curr_angle_z += gz;
+            curr_angle_z += gz;*/
+
+            //Debug.Log(ax+","+ay+","+az);
+
+
+            float ro = (float) Math.Atan((ax)/Math.Sqrt(Math.Pow(ay,2) + Math.Pow(az,2))) * RAD_A_DEG;//Calcular grados con aceleraciones
+            float phi = (float)Math.Atan(ay / Math.Sqrt(Math.Pow(ax, 2) + Math.Pow(az, 2))) * RAD_A_DEG;
+            float teta = (float)Math.Atan(Math.Sqrt(Math.Pow(ax, 2) + Math.Pow(ay, 2) /az )) * RAD_A_DEG;
+
+            Debug.Log(ro + "," + phi + "," + teta);
+
+            curr_angle_x += 0.96f * (curr_angle_x + gx * 0.025f) + 0.04f * ro;
+            curr_angle_y += 0.96f * (curr_angle_y + gy * 0.025f) + 0.04f * phi;
+            curr_angle_z += 0.96f * (curr_angle_z + gz * 0.025f) + 0.04f * teta;
+
+
+            Debug.Log(curr_angle_x + "," + curr_angle_y + "," + curr_angle_z);
 
             if (enableTranslation) target.transform.position = new Vector3(curr_offset_x, curr_offset_z, curr_offset_y);
-            if (enableRotation) target.transform.rotation = Quaternion.Euler(curr_angle_x * factor, -curr_angle_z * factor, curr_angle_y * factor);
-        }
+            if (enableRotation) target.transform.rotation = Quaternion.Euler(ro , -phi, teta);
+            /*if (enableRotation)
+            {
+                target.transform.Rotate(Vector3.up, curr_angle_z * Time.deltaTime);
+                target.transform.Rotate(Vector3.right, curr_angle_x * Time.deltaTime);
+                target.transform.Rotate(Vector3.back, curr_angle_z * Time.deltaTime);
+            }*/
+            }
     }
 
 }
