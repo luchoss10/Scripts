@@ -93,8 +93,8 @@ public class Prueba2 : MonoBehaviour
             float gy = Int32.Parse(dataRaw[4]) / G_R; //* gyro_normalizer_factor;
             float gz = Int32.Parse(dataRaw[5]) / G_R; //* gyro_normalizer_factor;
 
-            float az2 = az * A_R;
-            float gz2 = gz * G_R;
+            float az2 = az * A_R * acc_normalizer_factor;
+            float gz2 = gz * G_R * gyro_normalizer_factor;
 
             // prevent 
             //if (Mathf.Abs(ax) - 1 < 0) ax = 0;
@@ -126,15 +126,15 @@ public class Prueba2 : MonoBehaviour
 
             //Debug.Log(ro + "," + phi + "," + teta);
 
-            curr_angle_x = 0.99f * (curr_angle_x + gx * 0.025f) + 0.01f * ro;
+            curr_angle_x = 0.96f * (curr_angle_x + gx * 0.025f) + 0.04f * ro;
             //Debug.Log(curr_angle_x);
-            curr_angle_y = 0.99f * (curr_angle_y + gy * 0.025f) + 0.01f * phi;
+            curr_angle_y = 0.96f * (curr_angle_y + gy * 0.025f) + 0.04f * phi;
             //curr_angle_z = 0.99f * (curr_angle_z + gz * Time.deltaTime) + 0.01f * teta;
 
 
-            Debug.Log(curr_angle_x + "," + curr_angle_y + "," + curr_angle_z);
+            Debug.Log(curr_angle_x + "," + curr_angle_y * factor + "," + curr_angle_z);
 
-            Vector3 angles = new Vector3(curr_angle_x, 0, -1 * curr_angle_y);
+            Vector3 angles = new Vector3(curr_angle_x, curr_angle_z * factor, -1 * curr_angle_y);
 
             if (enableTranslation) target.transform.position = new Vector3(curr_offset_x, curr_offset_z, curr_offset_y);
             if (enableRotation) target.transform.localRotation = Quaternion.Euler(angles);
